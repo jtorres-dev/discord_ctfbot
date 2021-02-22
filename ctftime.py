@@ -58,16 +58,19 @@ def embed_events(json_events, status=None):
 		
 		start = utc_to_cst(event["start"])
 		finish = utc_to_cst(event["finish"])
-
-		# grabbing ongoing events, dont embed event if it's finished or hasnt started yet
-		# datetime.now() is considered to be naive to timezones; forcing cst timezone to be able to compare times
-		if status == "ongoing" and (datetime.now(tz=timezone("US/Central")) >= finish or datetime.now(tz=timezone("US/Central")) < start):
-			continue
-		if status == "finished" and datetime.now(tz=timezone("US/Central")) < finish:
-			continue
-		if status == "upcoming" and datetime.now(tz=timezone("US/Central")) > start:
-			continue
-
+        
+        # grabbing ongoing events, dont embed event if it's finished or hasnt started yet
+        # datetime.now() is considered to be naive to timezones; forcing cst timezone to be able to compare times
+        current_time = datetime.now(tz=timezone("US/Central"))
+        if status == "ongoing" and (current_time > finish or current_time < start):
+                continue
+        if status == "finished" and current_time < finish:
+                continue
+        if status == "upcoming" and current_time > start:
+                continue
+        if status == "update" and current_time > finish:
+                continue
+		
 		# if event has closed restriction, its probably for highschool
 		if event["restrictions"] == "Open" or event["restrictions"] == "Prequalified":
 			# default discord color

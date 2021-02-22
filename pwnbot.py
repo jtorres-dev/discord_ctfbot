@@ -6,9 +6,9 @@ from datetime import datetime
 
 # Token generated from https://discord.com/developers/applications
 # Keep this private, if exposed generate new one 
-TOKEN = "insert_token_here"
+TOKEN = "Nzg5Njc3MzQyMTAzODMwNTQ4.X91iVQ.5SruryxbdvWy_pxFISHZPjaeric"
 # Bot channel ID was grabbed from Settings > Appearance > Developer Mode (On). Afterwards, right click on desired channel to copy ID
-BOT_CHANNEL = 0
+BOT_CHANNEL = 791460017449598986
 
 # previous jsons for commands !events {all|next|past}
 prev_events = ""
@@ -16,6 +16,7 @@ prev_events_all = ""
 prev_events_next = ""
 prev_events_past = ""
 
+prev_update = ""
 
 bot = commands.Bot(command_prefix = '!')
 
@@ -211,7 +212,7 @@ async def pwnbot(ctx):
 async def update_channel():
 	# prev_events is used to self check bot for new events
 	# prev_embed_all is used for the `!event all` command (same as events used here)
-	global prev_events
+	global prev_update
 
 	channel = bot.get_channel(BOT_CHANNEL)
 	SEVEN_DAYS = ctftime.days_to_secs(7)
@@ -222,17 +223,16 @@ async def update_channel():
 
 	curr_events = ctftime.get_events(start, finish)
 
-	if prev_events == "" or curr_events != prev_events:
-		embed_msgs = ctftime.embed_events(curr_events, status="ongoing")
+	if prev_update == "" or curr_events != prev_update:
+		embed_msgs = ctftime.embed_events(curr_events, status="update")
 
 		for embed in embed_msgs:
 			await channel.send(embed=embed)
-		
-		prev_events = curr_events
-	
+
+		prev_update = curr_events
+
 		if len(embed_msgs) == 0:
 			await channel.send(":robot:  *There are no ongoing/upcoming events. I will update this channel when I see new events.*")
-
 
 
 bot.run(TOKEN)
