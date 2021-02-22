@@ -123,7 +123,7 @@ async def events(ctx, arg=None):
 		finish = current_time + SEVEN_DAYS
 
 		prev_events = fetch_new_events(start, finish, prev_events)
-		embed_msgs = ctftime.embed_events(prev_events_past, status="ongoing")
+		embed_msgs = ctftime.embed_events(prev_events, status="ongoing")
 
 		if len(embed_msgs) == 0:
 			await ctx.send(":robot:  **There are no ongoing events.**")
@@ -207,28 +207,28 @@ async def pwnbot(ctx):
 
 # sends update to #bot-channel with embedded new events. if events are the same as the old update,
 # dont update. checks every 1 hour for new content
-@tasks.loop(seconds=5)
+@tasks.loop(hours=1)
 async def update_channel():
 	# prev_events is used to self check bot for new events
 	# prev_embed_all is used for the `!event all` command (same as events used here)
-	global prev_events_next
+	global prev_events
 
 	channel = bot.get_channel(BOT_CHANNEL)
 	SEVEN_DAYS = ctftime.days_to_secs(7)
 	current_time = int(datetime.now().timestamp())
 
-	start = current_time
+	start = current_time - SEVEN_DAYS
 	finish = current_time + SEVEN_DAYS
 
 	curr_events = ctftime.get_events(start, finish)
 
-	if prev_events_next == "" or curr_events != prev_events_next:
-		embed_msgs = ctftime.embed_events(curr_events)
+	if prev_events == "" or curr_events != prev_events:
+		embed_msgs = ctftime.embed_events(curr_events, status="ongoing")
 
 		for embed in embed_msgs:
 			await channel.send(embed=embed)
 		
-		prev_events_next = curr_events
+		prev_events = curr_events
 	
 		if len(embed_msgs) == 0:
 			await channel.send(":robot:  *There are no ongoing/upcoming events. I will update this channel when I see new events.*")
