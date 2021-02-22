@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Token generated from https://discord.com/developers/applications
 # Keep this private, if exposed generate new one 
-TOKEN = "INSERT TOKEN HERE"
+TOKEN = "insert_token_here"
 # Bot channel ID was grabbed from Settings > Appearance > Developer Mode (On). Afterwards, right click on desired channel to copy ID
 BOT_CHANNEL = 0
 
@@ -16,12 +16,6 @@ prev_events_all = ""
 prev_events_next = ""
 prev_events_past = ""
 
-# previous embeds update used for !events if update happened
-prev_embed = []
-prev_embed_update = []
-prev_embed_all = []
-prev_embed_next = []
-prev_embed_past = []
 
 bot = commands.Bot(command_prefix = '!')
 
@@ -82,97 +76,72 @@ async def help(ctx):
 
 @bot.command()
 async def events(ctx, arg=None):
-	global prev_events_all, prev_embed_all
-	global prev_events_next, prev_embed_next
-	global prev_events_past, prev_embed_past
-	global prev_embed
-	
-	if arg == "all":
-		SEVEN_DAYS = ctftime.days_to_secs(7)
-		start = int(datetime.now().timestamp()) - SEVEN_DAYS
-		finish = int(datetime.now().timestamp()) + SEVEN_DAYS
+	global prev_events_all, prev_events_next, prev_events_past, prev_events
+	embed_msgs = []
 
-		# checks prev events to see if its the same as the new events	
-		new_events = get_new_events(start, finish, prev_events_all)
+	current_time = int(datetime.now().timestamp())
+	SEVEN_DAYS = ctftime.days_to_secs(7)
+
+
+	if arg == "all":
+		start = current_time - SEVEN_DAYS
+		finish = current_time + SEVEN_DAYS
+
+		# checks previous json events to see if its the same as the newly fetched events	
+		prev_events_all = fetch_new_events(start, finish, prev_events_all)
+		embed_msgs = ctftime.embed_events(prev_events_all)
 
 		# if there are new events, embed the new events and send to current channel
-		if new_events != "":
-			embed_msgs = ctftime.embed_events(new_events)
-			if len(embed_msgs) == 0:
-				await ctx.send(":robot:  *There are no events happening from last week to next week.*")
-			else:
-				for embed in embed_msgs:
-					await ctx.send(embed=embed)
-			
-				prev_events_all = new_events
-				prev_embed_all = embed_msgs
-		else:
-			for embed in prev_embed_all:
-				await ctx.send(embed=embed)
+		if len(embed_msgs) == 0:
+			await ctx.send(":robot:  *There are no events happening from last week to next week.*")
+			return
 
 	elif arg == "next":
-		start = int(datetime.now().timestamp())
-		finish = int(datetime.now().timestamp()) + ctftime.days_to_secs(7)
+		start = current_time
+		finish = current_time + SEVEN_DAYS
 		
-		new_events = get_new_events(start, finish, prev_events_next)
-		
-		if new_events != "":
-			embed_msgs = ctftime.embed_events(new_events, status="upcoming")
-			if len(embed_msgs) == 0:
-				await ctx.send(":robot:  *There are no upcoming events next week.*")
-			else:
-				for embed in embed_msgs:
-					await ctx.send(embed=embed)
-			
-				prev_events_next = new_events
-				prev_embed_next = embed_msgs
-		
-		else:
-			for embed in prev_embed_next:
-				await ctx.send(embed=embed)
+		prev_events_next = fetch_new_events(start, finish, prev_events_next)
+		embed_msgs = ctftime.embed_events(prev_events_next, status="upcoming")
+
+		if len(embed_msgs) == 0:
+			await ctx.send(":robot:  *There are no upcoming events next week.*")
+			return
 
 	elif arg == "past":
-		start = int(datetime.now().timestamp()) - ctftime.days_to_secs(7)
-		finish = int(datetime.now().timestamp())
-		
-		new_events = get_new_events(start, finish, prev_events_past)
-		
-		if new_events != "":
-			embed_msgs = ctftime.embed_events(new_events, status="finished")
-			if len(embed_msgs) == 0:
-				await ctx.send(":robot:  *There are no finished events from last week.*")
-			else:
-				for embed in embed_msgs:
-					await ctx.send(embed=embed)
-			
-				prev_events_past = new_events
-				prev_embed_past = embed_msgs
-		
-		else:
-			for embed in prev_embed_past:
-				await ctx.send(embed=embed)
+		start = current_time - SEVEN_DAYS
+		finish = current_time
+
+		prev_events_past = fetch_new_events(start, finish, prev_events_past)
+		embed_msgs = ctftime.embed_events(prev_events_past, status="finished")
+
+		if len(embed_msgs) == 0:
+			await ctx.send(":robot:  *There are no finished events from last week.*")
+			return
 
 	else:
-		SEVEN_DAYS = ctftime.days_to_secs(7)
-		start = int(datetime.now().timestamp()) - SEVEN_DAYS
-		finish = int(datetime.now().timestamp()) + SEVEN_DAYS
+		start = current_time - SEVEN_DAYS
+		finish = current_time + SEVEN_DAYS
 
-		new_events = get_new_events(start, finish, prev_events_all)
+		prev_events = fetch_new_events(start, finish, prev_events)
+		embed_msgs = ctftime.embed_events(prev_events_past, status="ongoing")
 
-		if len(prev_embed) <= 1:
-			embed_msgs = ctftime.embed_events(new_events, status="ongoing")
-			if len(embed_msgs) == 0:
-				await ctx.send(":robot:  **There are no ongoing events.**")
-			else:
-				for embed in embed_msgs:
-					await ctx.send(embed=embed)
-			
-				prev_embed = embed_msgs
-		
-		else:
-			for embed in prev_embed:
-				await ctx.send(embed=embed)
+		if len(embed_msgs) == 0:
+			await ctx.send(":robot:  **There are no ongoing events.**")
+			return
 
+
+	for embed in embed_msgs:
+		await ctx.send(embed=embed)
+
+
+
+def fetch_new_events(start, finish, prev_events):
+	new_events = ctftime.get_events(start, finish)
+
+	if prev_events == "" or new_events != prev_events:
+		return new_events
+	
+	return prev_events
 
 
 
@@ -236,59 +205,33 @@ async def pwnbot(ctx):
 	await ctx.send(random.choice(responses))
 
 
-
 # sends update to #bot-channel with embedded new events. if events are the same as the old update,
 # dont update. checks every 1 hour for new content
-@tasks.loop(seconds=10)
+@tasks.loop(seconds=5)
 async def update_channel():
 	# prev_events is used to self check bot for new events
 	# prev_embed_all is used for the `!event all` command (same as events used here)
-	global prev_events, prev_embed_update, prev_embed_all
+	global prev_events_next
 
 	channel = bot.get_channel(BOT_CHANNEL)
 	SEVEN_DAYS = ctftime.days_to_secs(7)
+	current_time = int(datetime.now().timestamp())
 
-	start = int(datetime.now().timestamp()) - SEVEN_DAYS
-	finish = int(datetime.now().timestamp()) + SEVEN_DAYS
-	
-	new_events = get_new_events(start, finish, prev_events)
-	
-	if new_events != "":
-		embed_msgs = ctftime.embed_events(new_events, status="ongoing")
-		embed_msgs += ctftime.embed_events(new_events, status="upcoming")
+	start = current_time
+	finish = current_time + SEVEN_DAYS
 
+	curr_events = ctftime.get_events(start, finish)
+
+	if prev_events_next == "" or curr_events != prev_events_next:
+		embed_msgs = ctftime.embed_events(curr_events)
+
+		for embed in embed_msgs:
+			await channel.send(embed=embed)
+		
+		prev_events_next = curr_events
+	
 		if len(embed_msgs) == 0:
 			await channel.send(":robot:  *There are no ongoing/upcoming events. I will update this channel when I see new events.*")
-		
-		else:
-			# double check for same embeds
-			if diff_embeds(prev_embed_update, embed_msgs):
-				for embed in embed_msgs:
-					await channel.send(embed=embed)
-			
-				prev_embed = embed_msgs
-				prev_embed_update = embed_msgs
-				prev_events = new_events
-
-
-
-def get_new_events(start, finish, prev_events):
-	curr_events = ctftime.get_events(start, finish)
-	if curr_events == prev_events:
-		return ""
-
-	return curr_events
-
-
-def diff_embeds(prev_embeds, curr_embeds):
-	if len(prev_embeds) != len(curr_embeds):
-		return True
-	else:
-		for prev, curr in zip(prev_embeds, curr_embeds):
-			if prev.title != curr.title:
-				return True
-
-		return False
 
 
 
