@@ -6,9 +6,9 @@ from datetime import datetime
 
 # Token generated from https://discord.com/developers/applications
 # Keep this private, if exposed generate new one 
-TOKEN = "Nzg5Njc3MzQyMTAzODMwNTQ4.X91iVQ.5SruryxbdvWy_pxFISHZPjaeric"
+TOKEN = ""
 # Bot channel ID was grabbed from Settings > Appearance > Developer Mode (On). Afterwards, right click on desired channel to copy ID
-BOT_CHANNEL = 791460017449598986
+BOT_CHANNEL = 0
 
 # previous jsons for commands !events {all|next|past}
 prev_events = ""
