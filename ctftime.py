@@ -1,84 +1,69 @@
-import requests, discord
-from datetime import datetime
-from pytz import timezone
-
 # used for the logo color processing
 # from PIL import Image
 # from urllib.request import urlopen, Request
 # from io import BytesIO
+#
+import requests, discord
+from datetime import datetime
+from pytz import timezone
 
 
 '''
-	helper func to convert timezones and prettify time
-	time example from ctftime: 2020-12-19T05:00:00+00:00
-						       YYYY-MM-DD HH:MM:SS[+-]Z
-
-	seems like they use ISO 8601 format: datetime.now(tzlocal()).replace(microsecond=0).isoformat()
-	more info: https://www.w3resource.com/python/python-date-and-time.php
-'''
-def utc_to_cst(time):
-	if time == None or time == "":
-		return ""
-	# converts to timezone aware datetime object, then converts UTC to CST
-	return datetime.strptime(time, "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone("US/Central"))
-
-
-'''
-	requires: time in UTC: start time in int seconds, finish time in int seconds
+	requires: time in UTC; The start and finish time in int seconds
 	param: limit is optional to choose the amount of events you would like from 1-100
 	returns: a json_object containing events in between start and finish inclusively
 '''
-def get_events(start, finish, limit=100):
-	if limit <= 0 or limit >= 100:
+def get_events(start, finish, status=None, limit=100):
+	if limit <= 0 or limit > 100:
 		limit = 100
 
 	while True:
 		try:
 			# header needed to prevent http error
-			headers = {"user-agent": "Mozilla/5.0"}
+			headers = {'user-agent': 'Mozilla/5.0'}
 			json_events = requests.get(f"https://ctftime.org/api/v1/events/?limit={limit}&start={start}&finish={finish}", headers=headers).json()
 			break
 		
 		except Exception as err:
 			print(f"\nError getting events from https://ctftime.org/api/v1/events/?limit={limit}&start={start}&finish={finish}: {err}\n")
 
-	return json_events
+	if embed:
+		return embed_events(json_events, status)
+	else:
+		return json_events
 
 '''
 	takes json format and cleans output to be embedded on discord.
 	embed makes the output look pretty with a logo grabbed from
 	ctftime.org and with the events descriptions.
 
-	status can be "finished", "ongoing", "upcoming"
+	status can be 'finished', 'ongoing', 'upcoming'
 '''
 def embed_events(json_events, status=None):
 	embed_msgs = []
 	
 	for event in json_events:
-		
-		start = utc_to_cst(event["start"])
-		finish = utc_to_cst(event["finish"])
-        
-        # grabbing ongoing events, dont embed event if it's finished or hasnt started yet
-        # datetime.now() is considered to be naive to timezones; forcing cst timezone to be able to compare times
-        current_time = datetime.now(tz=timezone("US/Central"))
-        if status == "ongoing" and (current_time > finish or current_time < start):
-                continue
-        if status == "finished" and current_time < finish:
-                continue
-        if status == "upcoming" and current_time > start:
-                continue
-        if status == "update" and current_time > finish:
-                continue
+		start  = utc_to_cst(event['start'])
+		finish = utc_to_cst(event['finish'])
+
+		# if the status is ongoing for the event, it doesnt embed them if it's finished or hasnt started yet
+		# datetime.now() is considered to be naive to timezones; forcing cst timezone to be able to compare times
+		current_time = datetime.now(tz=timezone('US/Central'))
+		if status == 'finished' and current_time < finish:
+			continue
+		if status == 'upcoming' and current_time >= start:
+			continue
+		if status == 'update' and current_time >= finish:
+			continue
 		
 		# if event has closed restriction, its probably for highschool
-		if event["restrictions"] == "Open" or event["restrictions"] == "Prequalified":
+		if event['restrictions'] == 'Open' or event['restrictions'] == 'Prequalified':
 			# default discord color
 			color = 0x2F3136
-			desc = event["description"]
+			desc = event['description']
 
 			if len(desc) > 1024:
-				desc = desc[:1021] + "..."
+				desc = desc[:1021] + '...'
 
 			# too slow for now, commenting out
 			#
@@ -99,20 +84,19 @@ def embed_events(json_events, status=None):
 			# 			color = 0x2F3136
 			# 			print(f"Error getting {event['logo']}: {err}\n")
 
-
-			if event["restrictions"] == "Prequalified":
+			if event['restrictions'] == 'Prequalified':
 				embed = discord.Embed(
 					title = f"{event['title']} (Prequalified)",
 					colour = color,
-					url = event["url"],
+					url = event['url'],
 					description = desc
 				)
 
 			else:
 				embed = discord.Embed(
-					title = event["title"],
+					title = event['title'],
 					colour = color,
-					url = event["url"],
+					url = event['url'],
 					description = desc
 				)
 
@@ -120,22 +104,35 @@ def embed_events(json_events, status=None):
 			start = start.strftime("%B %d, %Y \n@ %I:%M %p")
 			finish = finish.strftime("%B %d, %Y \n@ %I:%M %p")
 
-			embed.set_author(name=event["organizers"][0]["name"], icon_url=event["logo"])
-			embed.set_thumbnail(url=event["logo"])
-			embed.add_field(name="Participants", value=event["participants"], inline=False)
-			embed.add_field(name="Start", value=start, inline=True)
-			embed.add_field(name="Finish", value=finish, inline=True)
-			embed.set_footer(text=event["format"])
+			embed.set_author(name=event['organizers'][0]['name'], icon_url=event['logo'])
+			embed.set_thumbnail(url=event['logo'])
+			embed.add_field(name='Participants', value=event['participants'], inline=False)
+			embed.add_field(name='Start', value=start, inline=True)
+			embed.add_field(name='Finish', value=finish, inline=True)
+			embed.set_footer(text=event['format'])
 
 			embed_msgs.append(embed)
 
 	return embed_msgs
 
 
+'''
+  helper func to convert timezones and prettify time
+  time example from ctftime: 2020-12-19T05:00:00+00:00
+                   YYYY-MM-DD HH:MM:SS[+-]Z
+
+  seems like they use ISO 8601 format: datetime.now(tzlocal()).replace(microsecond=0).isoformat()
+  more info: https://www.w3resource.com/python/python-date-and-time.php
+'''
+def utc_to_cst(time):
+	if time == None or time == '':
+		return ''
+	# converts to timezone aware datetime object, then converts UTC to CST
+	return datetime.strptime(time, "%Y-%m-%dT%H:%M:%S%z").astimezone(timezone('US/Central'))
+
+
 def days_to_secs(days):
 	return days * 86400
-
-
 
 # not used, too slow when checking all logos
 # def most_used_color(img):
