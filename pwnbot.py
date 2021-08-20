@@ -1,7 +1,6 @@
 import discord
 import ctftime
 import random
-import copy
 from discord.ext import commands, tasks
 from datetime import datetime
 

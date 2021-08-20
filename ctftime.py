@@ -46,7 +46,6 @@ def embed_events(json_events, status=None):
 		start  = utc_to_cst(event['start'])
 		finish = utc_to_cst(event['finish'])
 
-		# if the status is ongoing for the event, it doesnt embed them if it's finished or hasnt started yet
 		# datetime.now() is considered to be naive to timezones; forcing cst timezone to be able to compare times
 		current_time = datetime.now(tz=timezone('US/Central'))
 		if status == 'finished' and current_time < finish:
@@ -134,7 +133,7 @@ def utc_to_cst(time):
 def days_to_secs(days):
 	return days * 86400
 
-# not used, too slow when checking all logos
+# not used, too slow when checking all pixels in all logos
 # def most_used_color(img):
 # 	width, height = img.size
 
