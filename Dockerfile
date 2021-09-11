@@ -6,6 +6,6 @@ pip3 install datetime && \
 pip3 install pytz && \
 pip3 install requests
 
-COPY pwnbot.py ctftime.py /discord/
+COPY src/ /discord/
 
 ENTRYPOINT python3 /discord/pwnbot.py
