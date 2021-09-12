@@ -9,9 +9,11 @@ from pytz import timezone
 
 
 '''
-  requires: time in UTC; The start and finish time in int seconds
-  param: limit is optional to choose the amount of events you would like from 1-100
-  returns: a json_object containing events in between start and finish inclusively
+  requires: 
+    start and finish time in UTC ISO 8601 format (int seconds)
+    status can be 'finished', 'ongoing', 'update'
+    limit is optional to choose the amount of events you would like from 1-100
+  returns: embedded events in between start and finish inclusively
 '''
 def get_events(start, finish, status=None, limit=100):
   if limit <= 0 or limit > 100:
@@ -35,7 +37,7 @@ def get_events(start, finish, status=None, limit=100):
   embed makes the output look pretty with a logo grabbed from
   ctftime.org and with the events descriptions.
 
-  status can be 'finished', 'ongoing', 'upcoming'
+  status can be 'finished', 'ongoing', 'update'
 '''
 def embed_events(json_events, status=None):
   embed_msgs = []
@@ -118,7 +120,7 @@ def embed_events(json_events, status=None):
   time example from ctftime: 2020-12-19T05:00:00+00:00
                    YYYY-MM-DD HH:MM:SS[+-]Z
 
-  seems like they use ISO 8601 format: datetime.now(tzlocal()).replace(microsecond=0).isoformat()
+  they use ISO 8601 format: datetime.now(tzlocal()).replace(microsecond=0).isoformat()
   more info: https://www.w3resource.com/python/python-date-and-time.php
 '''
 def utc_to_cst(time):
