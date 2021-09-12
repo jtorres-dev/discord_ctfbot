@@ -19,7 +19,7 @@ This bot is designed to fetch [ctftime.org](https://ctftime.org/) events and upd
 ![image](https://user-images.githubusercontent.com/59978921/132972974-a97587d3-2215-4e99-a9f0-fad94588cc28.png) <br /> <br />
 5. Open up `src/pwnbot.py` in your desired text editor and set the values for `BOT_TOKEN` and `BOT_CHANNEL` with your own token and bot channel ID: <br /> <br />
 ![image](https://user-images.githubusercontent.com/59978921/132973115-fbc1da7f-ea9c-448d-add3-99db050f7a5c.png) <br />
-<p align="center"><i>Note: `BOT_TOKEN` is a string and `BOT_CHANNEL` is an integer.</i></p><br />
+<p align="center"><i>Note: TOKEN is a string and BOT_CHANNEL is an integer.</i></p><br />
 
 6. After saving `src/pwnbot.py`, you will need to run the following command in this repository:
 ```
