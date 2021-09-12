@@ -29,3 +29,28 @@ $ docker build -t discord .
 ```
 $ docker run discord &
 ```
+8. You should now be able to run `!help` to get started. 🤖
+<br />
+
+## Bot Commands
+```
+Usage: !<command>
+
+Event Commands:
+ * !events - Displays ongoing ctf events within the week.
+ * !events all - Displays ctf events for the past and next week.
+ * !events next - Displays upcoming ctf events for next week.
+ * !events past - Displays finished ctf events from the past week.
+
+Clear Commands:
+ * !clear - Clears the last 20 messages from pwnbot in current channel.
+ * !clear all - Clears all messages from pwnbot in current channel.
+ * !clear last - Clears last message from pwnbot in current channel.
+
+Util Commands:
+ * !ping - Checks the latency for pwnbot with date/time
+
+Misc Commands:
+ * !celebrate - Celebration!!
+ * !facepalm - Sometimes you just have to facepalm ...
+```
