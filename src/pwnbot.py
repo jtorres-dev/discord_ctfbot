@@ -1,22 +1,36 @@
 import discord
 import ctftime
-import os
 import random
 from discord.ext import commands, tasks
 from datetime import datetime
 
+# pwnbotsecrets.py is imported from the same directory as a configuration file
+from pwnbotsecrets import token, bot_channel, roles, welcomemsg
+
 # Token generated from https://discord.com/developers/applications
 # Keep this private, if exposed generate new one 
-TOKEN = ''
+TOKEN = token
+
+# List of roles
+ROLES = roles
+
 # Bot channel ID was grabbed from Settings > Appearance > Developer Mode (On). Afterwards, right click on desired channel to copy ID
-BOT_CHANNEL = 0
-bot = commands.Bot(command_prefix = '!')
+BOT_CHANNEL = bot_channel ##### Add bot channel in config
+# Prepare required Intents object 
+if len(welcomemsg) > 0:
+  intents = discord.Intents.default()
+  intents.members = True
+else:
+  intents = discord.Intents.default()
+  intents.members = False
+bot = commands.Bot(command_prefix = '!', intents=intents)
 
 # When bot is ready
 @bot.event
 async def on_ready():
-  print('Starting loop task')
-  update_channel.start()
+  if BOT_CHANNEL > 0:
+    print('Starting loop task')
+    update_channel.start()
   print('pwnbot is now ready for commands.')
 
 
@@ -51,7 +65,10 @@ async def help(ctx):
     ' * !clear last - Clears last message from pwnbot in current channel.\n\n' +
 
     'Util Commands:\n' +
-    ' * !ping - Checks the latency for pwnbot with date/time\n\n' +
+    ' * !ping - Checks the latency for pwnbot with date/time\n' +
+    # Not sure if there should be a 'Role Commands:\n' category or if they should go here.
+    ' * !roles - See a list of roles available for you to add to yourself with !role\n' +
+    ' * !role - Add role to yourself to make the channels visible that were used for that past CTF\n\n' +
 
     'Misc Commands:\n' +
     ' * !celebrate - Celebration!!\n' +
@@ -61,6 +78,34 @@ async def help(ctx):
     '```'
   )
 
+@bot.event
+async def on_member_join(member):
+  if not member.bot:
+    if len(welcomemsg) > 0:
+      await member.send(welcomemsg)
+
+@bot.command(name="roles")
+async def _roles(ctx):
+  if not len(ROLES) > 0:
+    return
+  s = "```Roles available, add one to make it's category visible.\n\n"
+  # newlines = [roles[x] for x in range(len(roles)) if x % 5 == 0]
+  for ele in ROLES:
+    # if ele in newlines and ele != roles[0]:
+    #     s += "\n"
+    #     s += "🚩 "
+    s += "🚩 %s 🚩 \n" % ele
+  s += f"```\nExample usage: `{bot.command_prefix}role {ROLES[random.randint(0, len(ROLES)-1)]}`" 
+  await ctx.send(s)
+
+@bot.command(name="role")
+async def _role(ctx, role: discord.Role):
+  if role.name not in ROLES:
+    return
+  if role in ctx.author.roles:
+    await ctx.author.remove_roles(role)
+  else:
+    await ctx.author.add_roles(role)
 
 @bot.command()
 async def events(ctx, arg=None):
